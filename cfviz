@@ -19,9 +19,13 @@ def handle_terminals(template, graph, name, rank):
     if name in template:
         (subgraph, edges) = extract_graph(name, template[name])
         subgraph['rank'] = rank
-        subgraph['style'] = 'filled,rounded'
         graph['subgraphs'].append(subgraph)
         graph['edges'].extend(edges)
+
+        # Use a down-pointing arrow type shape
+        subgraph['shape'] = 'house'
+        subgraph['orientation'] = '180.0'
+        subgraph['style'] = 'filled'
 
 def extract_graph(name, elem):
     graph = {'name': name, 'nodes': [], 'edges': [], 'subgraphs': []}
@@ -56,19 +60,26 @@ def find_refs(context, elem):
         raise AssertionError('Unexpected type: %s' % elem)
 
 def render(graph, subgraph=False):
+    if subgraph:
+        prefix = '  '
+    else:
+        prefix = ''
     print '%s "%s" {' % ('subgraph' if subgraph else 'digraph', graph['name'])
-    print 'labeljust=l;'
-    print 'node [shape=box];'
+    print '%slabeljust=l;' % prefix
+    if 'shape' in graph:
+        print '%snode [shape="%s"];' % (prefix, graph['shape'])
+    else:
+        print '%snode [shape="box"];' % prefix
     if 'style' in graph:
-        print 'node [style="%s"]' % graph['style']
+        print '%snode [style="%s"]' % (prefix, graph['style'])
     if 'rank' in graph:
-        print 'rank=%s' % graph['rank']
+        print '%srank=%s' % (prefix, graph['rank'])
     for n in graph['nodes']:
-        print '"%s"' % n['name']
+        print '%s"%s"' % (prefix, n['name'])
     for s in graph['subgraphs']:
         render(s, True)
     for e in graph['edges']:
-        print '"%s" -> "%s";' % (e['from'], e['to'])
+        print '%s"%s" -> "%s";' % (prefix, e['from'], e['to'])
     print '}'
 
 def debug(*s):
